@@ -77,7 +77,7 @@ events = {
     "🤒COVID-19": "2020-03-11",
     "🏦SVB 파산": "2023-03-10",
     "🪙미국 관세 발표": "2025-04-02",
-    "💥미-이란 전쟁(사나리오)": "2026-02-27"
+    "💥미-이란 전쟁": "2026-02-27"
 }
 
 for name, date in events.items():
@@ -122,6 +122,12 @@ fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['SP500_DD'], fill='tozer
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['Gold_DD'], fill='tozeroy', name='Gold MDD', line=dict(color='gold')))
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['USD_DD'], fill='tozeroy', name='USD MDD', line=dict(color='blue')))
 fig4.update_layout(title="자산별 낙폭 추이 (Drawdown)", yaxis_title="낙폭 비율", hovermode="x unified")
+
+# 이벤트 날짜 표기 추가
+for name, date in events.items():
+    fig4.add_vline(x=date, line_width=1.5, line_dash="dash", line_color="gray")
+    fig4.add_annotation(x=date, text=name, showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="gray", size=10))
+
 st.plotly_chart(fig4, use_container_width=True)
 
 st.markdown("---")
