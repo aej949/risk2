@@ -173,6 +173,8 @@ df_raw['Agg_Ret'] = (df_raw['Gold_Ret'] * 0.30 + df_raw['USD_Ret'] * 0.30 + df_r
 
 recent_df = df_raw.tail(30).copy()
 target_date = "2026-04-02"
+today_data = df_raw[df_raw['Date'] == target_date]
+
 # 6. 2026 위기 구간 개별 자산 성과 계산 (2/27 ~ 4/2)
 if not today_data.empty:
     crisis_start_date = "2026-02-27"
