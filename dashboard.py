@@ -183,12 +183,12 @@ if not today_data.empty:
     if not start_data.empty:
         # 시작가 및 종료가 추출
         s_gold, e_gold = start_data['Gold'].values[0], today_data['Gold'].values[0]
-        s_sp = start_data['S&P500'].values[0], today_data['S&P500'].values[0]
+        s_sp, e_sp = start_data['S&P500'].values[0], today_data['S&P500'].values[0]
         s_usd, e_usd = start_data['USD'].values[0], today_data['USD'].values[0]
         
         # 변동률 계산
         gold_perf = (e_gold / s_gold) - 1
-        sp500_perf = (e_sp[1] / s_sp[0]) - 1
+        sp500_perf = (e_sp / s_sp) - 1
         usd_perf = (e_usd / s_usd) - 1
 
         st.markdown("#### 🪙 개별 자산 위기 성과 (2/27 대비 4/2)")
