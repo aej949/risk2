@@ -235,6 +235,9 @@ if not today_data.empty:
     recent_df['Safe_Cum'] = (1 + recent_df['Safe_Ret']).cumprod() - 1
     recent_df['Opt_Cum'] = (1 + recent_df['Opt_Ret']).cumprod() - 1
     recent_df['Agg_Cum'] = (1 + recent_df['Agg_Ret']).cumprod() - 1
+    recent_df['SP500_Cum_Rel'] = (1 + recent_df['SP500_Ret']).cumprod() - 1 # 벤치마크용
+    recent_df['Gold_Cum_Rel'] = (1 + recent_df['Gold_Ret']).cumprod() - 1   # 개별 자산 비교용
+    recent_df['USD_Cum_Rel'] = (1 + recent_df['USD_Ret']).cumprod() - 1    # 개별 자산 비교용
 
     fig5 = px.line(recent_df, x='Date', y=['Safe_Cum', 'Opt_Cum', 'Agg_Cum', 'SP500_Cum_Rel', 'Gold_Cum_Rel', 'USD_Cum_Rel'],
                   title="최근 30일간 전략별 및 자산별 누적 성과 비교",
