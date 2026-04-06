@@ -111,7 +111,7 @@ st.markdown("---")
 st.markdown("### 📉 Chart 3: 위기 구간 자산별 최대 낙폭(MDD)")
 def calculate_mdd(series):
     rolling_max = series.cummax()
-    return (series - rolling_max) / rolling_max
+    return (rolling_max - series) / rolling_max
 
 df_raw['SP500_DD'] = calculate_mdd(df_raw['S&P500'])
 df_raw['Gold_DD'] = calculate_mdd(df_raw['Gold'])
@@ -121,12 +121,23 @@ fig4 = px_go.Figure()
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['SP500_DD'], fill='tozeroy', name='S&P 500 MDD', line=dict(color='red')))
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['Gold_DD'], fill='tozeroy', name='Gold MDD', line=dict(color='gold')))
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['USD_DD'], fill='tozeroy', name='USD MDD', line=dict(color='blue')))
-fig4.update_layout(title="자산별 낙폭 추이 (Drawdown)", yaxis_title="낙폭 비율", hovermode="x unified")
+fig4.update_layout(title="자산별 낙폭 추이 (Drawdown - Magnitude)", yaxis_title="낙폭 비율", hovermode="x unified")
 
-# 이벤트 날짜 표기 추가
+# 이벤트 날짜 표기 추가 (점선 제거 후 상단 화살표/날짜)
 for name, date in events.items():
-    fig4.add_vline(x=date, line_width=1.5, line_dash="dash", line_color="gray")
-    fig4.add_annotation(x=date, text=name, showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="gray", size=10))
+    fig4.add_annotation(
+        x=date, 
+        y=1, 
+        yref="paper",
+        text=f"{name}<br>{date}", 
+        showarrow=True, 
+        arrowhead=2, 
+        ax=0, 
+        ay=-40, 
+        font=dict(color="black", size=10),
+        bgcolor="white",
+        opacity=0.8
+    )
 
 st.plotly_chart(fig4, use_container_width=True)
 
