@@ -173,9 +173,29 @@ df_raw['Agg_Ret'] = (df_raw['Gold_Ret'] * 0.30 + df_raw['USD_Ret'] * 0.30 + df_r
 
 recent_df = df_raw.tail(30).copy()
 target_date = "2026-04-02"
-today_data = df_raw[df_raw['Date'] == target_date]
-
+# 6. 2026 위기 구간 개별 자산 성과 계산 (2/27 ~ 4/2)
 if not today_data.empty:
+    crisis_start_date = "2026-02-27"
+    start_data = df_raw[df_raw['Date'] == crisis_start_date]
+    
+    if not start_data.empty:
+        # 시작가 및 종료가 추출
+        s_gold, e_gold = start_data['Gold'].values[0], today_data['Gold'].values[0]
+        s_sp = start_data['S&P500'].values[0], today_data['S&P500'].values[0]
+        s_usd, e_usd = start_data['USD'].values[0], today_data['USD'].values[0]
+        
+        # 변동률 계산
+        gold_perf = (e_gold / s_gold) - 1
+        sp500_perf = (e_sp[1] / s_sp[0]) - 1
+        usd_perf = (e_usd / s_usd) - 1
+
+        st.markdown("#### 🪙 개별 자산 위기 성과 (2/27 대비 4/2)")
+        a1, a2, a3 = st.columns(3)
+        with a1: st.metric("금 (Gold)", f"{(gold_perf*100):.2f}%", f"{gold_perf*100:.2f}%", delta_color="normal")
+        with a2: st.metric("S&P 500", f"{(sp500_perf*100):.2f}%", f"{sp500_perf*100:.2f}%", delta_color="normal")
+        with a3: st.metric("달러 (USD)", f"{(usd_perf*100):.2f}%", f"{usd_perf*100:.2f}%", delta_color="normal")
+
+    st.markdown("#### 🥧 투자 성향별 포트폴리오 수익률 (4/2 당일)")
     m1, m2, m3 = st.columns(3)
     with m1: st.metric("🛡️ 안정형 (4/2)", f"{(today_data['Safe_Ret'].values[0]*100):.2f}%", "Safe Strategy")
     with m2: st.metric("⭐ 최적 추천형 (4/2)", f"{(today_data['Opt_Ret'].values[0]*100):.2f}%", "Optimal Strategy")
