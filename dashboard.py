@@ -286,7 +286,6 @@ with strat_col2:
     st.success("**추천 대상**: 위기 이후의 강력한 V자 반등 수익을 극대화하려는 공격적 투자자. S&P 500의 높은 탄력성에 집중 배분합니다.")
 
 st.markdown("---")
-
 st.info(f"📊 데이터 가공 정보: 프로젝트 루트의 data/finance_10y_data.csv 사용 (총 {len(df_raw)}행)")
 
 # Row 7: 전술적 매매 타이밍 분석 (기술적 지표)
