@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import yfinance as yf
 import plotly.express as px
 import plotly.graph_objects as px_go
 from plotly.subplots import make_subplots
@@ -12,14 +13,46 @@ st.set_page_config(layout="wide", page_title="금융 위기 대응 자산 배분
 import os
 
 # 1. 데이터 로드 및 전처리
-@st.cache_data
+@st.cache_data(ttl=3600) # 1시간 동안 캐시 유지 (실시간 수집 효율화)
 def load_data():
-    # 현재 파일(dashboard.py)의 디렉토리를 기준으로 경로 설정
-    curr_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(curr_dir, 'data', 'finance_2020_data.csv')
+    try:
+        # 실시간 데이터 수집 티커 설정
+        # 금(GC=F), 달러 인덱스(DX-Y.NYB), S&P500(^GSPC)
+        tickers = {
+            'Gold': 'GC=F',
+            'USD': 'DX-Y.NYB',
+            'S&P500': '^GSPC'
+        }
+        
+        all_data = pd.DataFrame()
+        
+        # 야후 파이낸스에서 실시간 데이터 다운로드 (최근 10년)
+        for name, ticker in tickers.items():
+            ticker_data = yf.download(ticker, period='10y')
+            
+            if isinstance(ticker_data.columns, pd.MultiIndex):
+                close_price = ticker_data['Close'][ticker]
+            else:
+                close_price = ticker_data['Close']
+                
+            all_data[name] = close_price
+            
+        all_data.index.name = 'Date'
+        all_data.reset_index(inplace=True)
+        df = all_data.ffill()
+        
+    except Exception as e:
+        st.warning(f"실시간 데이터 수집 중 오류가 발생하여 로컬 파일을 로드합니다: {e}")
+        # 현재 파일(dashboard.py)의 디렉토리를 기준으로 경로 설정
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(curr_dir, 'data', 'finance_10y_data.csv')
+        
+        df = pd.read_csv(file_path)
+        df['Date'] = pd.to_datetime(df['Date'])
+        # 컬럼명 통일 (Dollar -> USD)
+        if 'Dollar' in df.columns:
+            df.rename(columns={'Dollar': 'USD'}, inplace=True)
     
-    df = pd.read_csv(file_path)
-    df['Date'] = pd.to_datetime(df['Date'])
     df = df.sort_values('Date').reset_index(drop=True)
     
     # 일일 수익률 계산
@@ -31,10 +64,6 @@ def load_data():
     df['USD_Cum'] = (1 + df['USD_Ret']).cumprod() - 1
     df['Gold_Cum'] = (1 + df['Gold_Ret']).cumprod() - 1
     df['SP500_Cum'] = (1 + df['SP500_Ret']).cumprod() - 1
-    
-    # 컬럼명 통일 (Dollar -> USD)
-    if 'Dollar' in df.columns:
-        df.rename(columns={'Dollar': 'USD'}, inplace=True)
     
     return df
 
@@ -228,8 +257,12 @@ with p_col3:
 
 st.markdown("---")
 
-# Row 5: 4/2 실전 성과 분석
-st.markdown("### 🎯 Chart 5: 미국-이란 전쟁 위기 구간 포트폴리오 실적 비교")
+# Row 5: 실전 성과 분석 (최신 일자 기준)
+latest_date_dt = df_raw['Date'].max()
+target_date = latest_date_dt.strftime('%Y-%m-%d')
+date_display = f"{latest_date_dt.month}/{latest_date_dt.day}"
+
+st.markdown(f"### 🎯 Chart 5: 투자 성향별 포트폴리오 실적 비교 ({target_date} 기준)")
 
 # 포트폴리오별 수익률 계산 필드 생성
 df_raw['Safe_Ret'] = (df_raw['Gold_Ret'] * 0.50 + df_raw['USD_Ret'] * 0.40 + df_raw['SP500_Ret'] * 0.10)
@@ -237,7 +270,6 @@ df_raw['Opt_Ret'] = (df_raw['Gold_Ret'] * 0.45 + df_raw['USD_Ret'] * 0.35 + df_r
 df_raw['Agg_Ret'] = (df_raw['Gold_Ret'] * 0.30 + df_raw['USD_Ret'] * 0.30 + df_raw['SP500_Ret'] * 0.40)
 
 recent_df = df_raw.tail(30).copy()
-target_date = "2026-04-02"
 today_data = df_raw[df_raw['Date'] == target_date]
 
 # 6. 2026 미국-이란 전쟁 위기 구간 개별 자산 성과 계산
@@ -262,11 +294,11 @@ if not today_data.empty:
         with a2: st.metric("S&P 500", f"{(sp500_perf*100):.2f}%", f"{sp500_perf*100:.2f}%", delta_color="normal")
         with a3: st.metric("달러 (USD)", f"{(usd_perf*100):.2f}%", f"{usd_perf*100:.2f}%", delta_color="normal")
 
-    st.markdown("#### 🥧 투자 성향별 포트폴리오 수익률")
+    st.markdown(f"#### 🥧 투자 성향별 포트폴리오 수익률 ({date_display})")
     m1, m2, m3 = st.columns(3)
-    with m1: st.metric("🛡️ 안정형 (4/2)", f"{(today_data['Safe_Ret'].values[0]*100):.2f}%", "Safe Strategy")
-    with m2: st.metric("⭐ 최적 추천형 (4/2)", f"{(today_data['Opt_Ret'].values[0]*100):.2f}%", "Optimal Strategy")
-    with m3: st.metric("🔥 공격형 (4/2)", f"{(today_data['Agg_Ret'].values[0]*100):.2f}%", "Aggressive Strategy")
+    with m1: st.metric(f"🛡️ 안정형 ({date_display})", f"{(today_data['Safe_Ret'].values[0]*100):.2f}%", "Safe Strategy")
+    with m2: st.metric(f"⭐ 최적 추천형 ({date_display})", f"{(today_data['Opt_Ret'].values[0]*100):.2f}%", "Optimal Strategy")
+    with m3: st.metric(f"🔥 공격형 ({date_display})", f"{(today_data['Agg_Ret'].values[0]*100):.2f}%", "Aggressive Strategy")
 
     # 최근 30일 누적 수익률 시뮬레이션
     recent_df['Safe_Cum'] = (1 + recent_df['Safe_Ret']).cumprod() - 1
@@ -324,7 +356,7 @@ with strat_col2:
     st.success("**추천 대상**: 위기 이후의 강력한 V자 반등 수익을 극대화하려는 공격적 투자자. S&P 500의 높은 탄력성에 집중 배분합니다.")
 
 st.markdown("---")
-st.info(f"📊 데이터 가공 정보: 프로젝트 루트의 data/finance_10y_data.csv 사용 (총 {len(df_raw)}행)")
+st.info(f"📊 데이터 정보: 실시간 수집 및 프로젝트 루트의 데이터 사용 (총 {len(df_raw)}행, 기준일: {target_date})")
 
 # Row 7: 전술적 매매 타이밍 분석 (기술적 지표)
 st.markdown("### 🔍 Chart 7: 전술적 매매 타이밍 분석 (기술적 지표)")
