@@ -95,6 +95,19 @@ def calculate_indicators(df, asset_col):
     temp_df['MACD_Signal'] = temp_df['MACD'].ewm(span=9, adjust=False).mean()
     temp_df['MACD_Hist'] = temp_df['MACD'] - temp_df['MACD_Signal']
     
+    # 시각화용 시그널 포인트 계산 (전체 기간)
+    # 1. 이동평균선 크로스
+    temp_df['Prev_SMA50'] = temp_df['SMA50'].shift(1)
+    temp_df['Prev_SMA200'] = temp_df['SMA200'].shift(1)
+    
+    buy_cond = (temp_df['Prev_SMA50'] < temp_df['Prev_SMA200']) & (temp_df['SMA50'] > temp_df['SMA200'])
+    sell_cond = (temp_df['Prev_SMA50'] > temp_df['Prev_SMA200']) & (temp_df['SMA50'] < temp_df['SMA200'])
+    
+    # 2. RSI/BB (간소화를 위해 가격 차트 표시는 이평선 크로스 위주로 하거나 합산 가능)
+    # 여기서는 시각화의 명확성을 위해 모든 주요 Buy/Sell 시점을 마커용 컬럼으로 만듭니다.
+    temp_df['Signal_Buy'] = np.where(buy_cond | (temp_df['RSI'] < 30) | (temp_df[asset_col] < temp_df['BB_Lower']), temp_df[asset_col], np.nan)
+    temp_df['Signal_Sell'] = np.where(sell_cond | (temp_df['RSI'] > 70) | (temp_df[asset_col] > temp_df['BB_Upper']), temp_df[asset_col], np.nan)
+    
     return temp_df
 
 # 매매 신호 분석 함수
@@ -383,6 +396,27 @@ with ta_col1:
             else:
                 st.error(f"**{title}**\n\n{desc}")
 
+    # 초보자 가이드 추가 (Expander)
+    with st.expander("💡 초보자를 위한 기술적 지표 가이드"):
+        st.markdown("""
+        **1. 볼린저 밴드 (Bollinger Bands)**
+        - 가격의 변동 범위를 보여줍니다.
+        - **해석**: 가격이 상단 밴드에 닿으면 '과열(매도 검토)', 하단 밴드에 닿으면 '과매도(매수 검토)'로 봅니다.
+        
+        **2. 이동평균선 (SMA 50/200)**
+        - **골든크로스(▲)**: 단기선(50일)이 장기선(200일)을 위로 뚫을 때 -> 강력한 상승 신호
+        - **데드크로스(▼)**: 단기선이 장기선을 아래로 뚫을 때 -> 하락 추세 시작
+        
+        **3. RSI (상대강도지수)**
+        - 0~100 사이의 수치로 매수/매도 강도를 나타냅니다.
+        - **70 이상**: 과매수 구간 (단기 조정 가능성)
+        - **30 이하**: 과매도 구간 (기술적 반등 가능성)
+        
+        **4. MACD**
+        - 추세의 방향과 강도를 보여주는 지표입니다.
+        - 파란색 선(MACD)이 주황색 선(Signal)을 상향 돌파하면 매수 신호로 해석합니다.
+        """)
+
 with ta_col2:
     # 최근 1년(252일) 데이터 시각화하여 가독성 확보
     df_plot = df_ta.tail(252).copy()
@@ -398,6 +432,21 @@ with ta_col2:
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Lower'], name='BB Lower', line=dict(color='gray', dash='dash', width=1), fill='tonexty'), row=1, col=1)
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5)), row=1, col=1)
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5)), row=1, col=1)
+    
+    # 🌟 매수/매도 시그널 시각화 추적 (가격 차트)
+    fig_ta.add_trace(px_go.Scatter(
+        x=df_plot['Date'], y=df_plot['Signal_Buy'],
+        mode='markers', name='Buy Signal',
+        marker=dict(symbol='triangle-up', size=12, color='green', line=dict(width=1, color='white')),
+        hovertemplate="매수 신호 발생<br>날짜: %{x}<br>가격: %{y:.2f}"
+    ), row=1, col=1)
+    
+    fig_ta.add_trace(px_go.Scatter(
+        x=df_plot['Date'], y=df_plot['Signal_Sell'],
+        mode='markers', name='Sell Signal',
+        marker=dict(symbol='triangle-down', size=12, color='red', line=dict(width=1, color='white')),
+        hovertemplate="매도 신호 발생<br>날짜: %{x}<br>가격: %{y:.2f}"
+    ), row=1, col=1)
     
     # 2. RSI
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple')), row=2, col=1)
