@@ -181,15 +181,15 @@ fig1 = px.line(df_raw, x='Date', y=['Gold_Cum', 'USD_Cum', 'SP500_Cum'],
               color_discrete_map={'Gold_Cum': 'gold', 'USD_Cum': 'blue', 'SP500_Cum': 'red'})
 
 events = {
-    "🤒COVID-19": "2020-03-11",
-    "🏦SVB 파산": "2023-03-10",
-    "🪙미국 관세 발표": "2025-04-02",
-    "💥미-이란 전쟁(사나리오)": "2026-02-27"
+    "COVID-19": "2020-03-11",
+    "SVB 파산": "2023-03-10",
+    "미국 관세 발표": "2025-04-02",
+    "미-이란 전쟁(사나리오)": "2026-02-27"
 }
 
 for name, date in events.items():
     fig1.add_vline(x=date, line_width=1.5, line_dash="dash", line_color="gray")
-    fig1.add_annotation(x=date, text=name, showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="gray", size=10))
+    fig1.add_annotation(x=date, y=1, yref="paper", text=name, showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="gray", size=10))
 
 fig1.update_layout(legend_title="자산구분", hovermode="x unified")
 fig1.update_xaxes(range=['2020-01-01', df_raw['Date'].max()])
@@ -231,6 +231,11 @@ fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['Gold_DD'], fill='tozero
 fig4.add_trace(px_go.Scatter(x=df_raw['Date'], y=df_raw['USD_DD'], fill='tozeroy', name='USD MDD', line=dict(color='blue')))
 fig4.update_layout(title="자산별 낙폭 추이 (Drawdown)", yaxis_title="낙폭 비율", hovermode="x unified")
 fig4.update_xaxes(range=['2020-01-01', df_raw['Date'].max()])
+
+for name, date in events.items():
+    fig4.add_vline(x=date, line_width=1.5, line_dash="dash", line_color="gray")
+    fig4.add_annotation(x=date, y=1, yref="paper", text=name, showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="gray", size=10))
+
 st.plotly_chart(fig4, use_container_width=True)
 
 st.markdown("---")
@@ -336,6 +341,11 @@ if not today_data.empty:
                   labels={'value': '누적 수익률 (%)', 'variable': '자산/전략 구분'})
     
     fig5.update_layout(hovermode="x unified")
+    
+    # 미-이란 전쟁 발발일 화살표 표기
+    fig5.add_vline(x="2026-02-27", line_width=1.5, line_dash="dash", line_color="red")
+    fig5.add_annotation(x="2026-02-27", y=1, yref="paper", text="미-이란 전쟁 발발", showarrow=True, arrowhead=1, ax=0, ay=-30, font=dict(color="red", size=10))
+    
     st.plotly_chart(fig5, use_container_width=True)
     
     st.info("""
