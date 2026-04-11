@@ -449,29 +449,35 @@ with ta_col2:
     # 최근 1년(252일) 데이터 시각화하여 가독성 확보
     df_plot = df_ta.tail(252).copy()
     
-    fig_ta = make_subplots(rows=2, cols=1, shared_xaxes=True, 
-                          vertical_spacing=0.08, 
-                          row_heights=[0.7, 0.3],
-                          subplot_titles=(f"{selected_asset} 가격 및 볼린저 밴드 (최근 1년)", "RSI (14)"))
+    fig_ta = make_subplots(rows=3, cols=1, shared_xaxes=True, 
+                          vertical_spacing=0.06, 
+                          row_heights=[0.4, 0.4, 0.2],
+                          subplot_titles=(f"{selected_asset} 가격 및 볼린저 밴드", "이동평균선 (20일, 50일, 200일)", "RSI (14)"))
     
-    # 1. 가격/BB/이평선
+    # 1. 가격 및 볼린저 밴드
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price', line=dict(color='black', width=2)), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Upper'], name='BB Upper', line=dict(color='gray', dash='dash', width=1)), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Lower'], name='BB Lower', line=dict(color='gray', dash='dash', width=1), fill='tonexty'), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5)), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5)), row=1, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Upper'], name='BB Upper', line=dict(color='red', dash='dash', width=1.5)), row=1, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Lower'], name='BB Lower', line=dict(color='green', dash='dash', width=1.5), fill='tonexty', fillcolor='rgba(128,128,128,0.2)'), row=1, col=1)
+    fig_ta.update_yaxes(title_text="볼린저밴드", row=1, col=1)
+
+    # 2. 가격 및 이동평균선
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price ', showlegend=False, line=dict(color='black', width=2)), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA20'], name='SMA 20', line=dict(color='orange', width=1.5)), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5)), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5)), row=2, col=1)
+    fig_ta.update_yaxes(title_text="이동평균선", row=2, col=1)
     
-    # 2. RSI
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple')), row=2, col=1)
-    fig_ta.add_hline(y=70, line=dict(color="red", dash="dash"), row=2, col=1)
-    fig_ta.add_hline(y=30, line=dict(color="green", dash="dash"), row=2, col=1)
+    # 3. RSI
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple')), row=3, col=1)
+    fig_ta.add_hline(y=70, line=dict(color="red", dash="dash"), row=3, col=1)
+    fig_ta.add_hline(y=30, line=dict(color="green", dash="dash"), row=3, col=1)
     
     # RSI 과매수/과매도 구간 배경색 추가
-    fig_ta.add_hrect(y0=70, y1=100, line_width=0, fillcolor="red", opacity=0.1, row=2, col=1)
-    fig_ta.add_hrect(y0=0, y1=30, line_width=0, fillcolor="green", opacity=0.1, row=2, col=1)
-    fig_ta.update_yaxes(range=[0, 100], row=2, col=1)
+    fig_ta.add_hrect(y0=70, y1=100, line_width=0, fillcolor="red", opacity=0.1, row=3, col=1, annotation_text="과매수", annotation_position="top left", annotation_font_color="red")
+    fig_ta.add_hrect(y0=0, y1=30, line_width=0, fillcolor="green", opacity=0.1, row=3, col=1, annotation_text="과매도", annotation_position="bottom left", annotation_font_color="green")
+    fig_ta.update_yaxes(title_text="RSI", range=[0, 100], row=3, col=1)
     
-    fig_ta.update_layout(height=850, showlegend=True, hovermode="x unified", template="plotly_white")
+    fig_ta.update_layout(height=1000, showlegend=True, hovermode="x unified", template="plotly_white")
     st.plotly_chart(fig_ta, use_container_width=True)
 
 st.caption("※ 본 분석은 기술적 지표에 기반한 참고 자료이며, 투자 결정의 최종 책임은 투자자 본인에게 있습니다.")
