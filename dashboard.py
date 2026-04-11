@@ -453,11 +453,10 @@ with ta_col2:
     # 최근 1년(252일) 데이터 시각화하여 가독성 확보
     df_plot = df_ta.tail(252).copy()
     
-    # 기존 3행(MACD 포함)에서 2행으로 축소
-    fig_ta = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+    fig_ta = make_subplots(rows=3, cols=1, shared_xaxes=True, 
                           vertical_spacing=0.08, 
-                          row_heights=[0.7, 0.3],
-                          subplot_titles=(f"{selected_asset} 가격, 볼린저 밴드 및 이동평균선", "RSI (상대강도지수)"))
+                          row_heights=[0.5, 0.25, 0.25],
+                          subplot_titles=(f"{selected_asset} 가격 및 볼린저 밴드 (최근 1년)", "RSI (14)", "MACD"))
     
     # 1. 가격/BB/이평선
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price', line=dict(color='black', width=2)), row=1, col=1)
@@ -466,34 +465,17 @@ with ta_col2:
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5)), row=1, col=1)
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5)), row=1, col=1)
     
-    # 1-1. 볼린저 밴드 터치 지점 표시 (상단 터치: 과열, 하단 터치: 침체)
-    bb_upper_touch = df_plot[df_plot[selected_asset] >= df_plot['BB_Upper']]
-    bb_lower_touch = df_plot[df_plot[selected_asset] <= df_plot['BB_Lower']]
-    if not bb_upper_touch.empty:
-        fig_ta.add_trace(px_go.Scatter(x=bb_upper_touch['Date'], y=bb_upper_touch[selected_asset], mode='markers', marker=dict(color='red', size=9, symbol='triangle-down'), name='상단 터치(과열)'), row=1, col=1)
-    if not bb_lower_touch.empty:
-        fig_ta.add_trace(px_go.Scatter(x=bb_lower_touch['Date'], y=bb_lower_touch[selected_asset], mode='markers', marker=dict(color='green', size=9, symbol='triangle-up'), name='하단 터치(과매도)'), row=1, col=1)
-
-    # 1-2. 이동평균선 크로스 지점 표시
-    golden_cross = df_plot[(df_plot['Prev_SMA50'] < df_plot['Prev_SMA200']) & (df_plot['SMA50'] > df_plot['SMA200'])]
-    dead_cross = df_plot[(df_plot['Prev_SMA50'] > df_plot['Prev_SMA200']) & (df_plot['SMA50'] < df_plot['SMA200'])]
-    
-    if not golden_cross.empty:
-        fig_ta.add_trace(px_go.Scatter(x=golden_cross['Date'], y=golden_cross['SMA50'], mode='markers', marker=dict(color='gold', size=15, symbol='star', line=dict(color='orange', width=2)), name='골든크로스(상승기류)'), row=1, col=1)
-    if not dead_cross.empty:
-        fig_ta.add_trace(px_go.Scatter(x=dead_cross['Date'], y=dead_cross['SMA50'], mode='markers', marker=dict(color='black', size=12, symbol='x', line=dict(color='red', width=2)), name='데드크로스(하락기류)'), row=1, col=1)
-
     # 2. RSI
     fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple')), row=2, col=1)
     fig_ta.add_hline(y=70, line=dict(color="red", dash="dash"), row=2, col=1)
     fig_ta.add_hline(y=30, line=dict(color="green", dash="dash"), row=2, col=1)
     
-    # 2-1. RSI 과매수/과매도 구간 색상으로 배경 직관적 구분
-    fig_ta.add_hrect(y0=70, y1=100, fillcolor="red", opacity=0.1, layer="below", row=2, col=1)
-    fig_ta.add_hrect(y0=0, y1=30, fillcolor="green", opacity=0.1, layer="below", row=2, col=1)
+    # 3. MACD
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['MACD'], name='MACD', line=dict(color='blue')), row=3, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['MACD_Signal'], name='Signal', line=dict(color='orange')), row=3, col=1)
+    fig_ta.add_trace(px_go.Bar(x=df_plot['Date'], y=df_plot['MACD_Hist'], name='Histogram', marker_color='gray'), row=3, col=1)
     
-    # 레이아웃 높이를 850에서 650 정도로 축소 (그래프 1개 제외됨)
-    fig_ta.update_layout(height=650, showlegend=True, hovermode="x unified", template="plotly_white")
+    fig_ta.update_layout(height=850, showlegend=True, hovermode="x unified", template="plotly_white")
     st.plotly_chart(fig_ta, use_container_width=True)
 
 st.caption("※ 본 분석은 기술적 지표에 기반한 참고 자료이며, 투자 결정의 최종 책임은 투자자 본인에게 있습니다.")
