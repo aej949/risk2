@@ -455,15 +455,15 @@ with ta_col2:
                           subplot_titles=(f"{selected_asset} 가격 및 볼린저 밴드", "이동평균선 (50일, 200일)", "RSI (14)"))
     
     # 1. 가격 및 볼린저 밴드
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price', line=dict(color='black', width=2)), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Upper'], name='BB Upper', line=dict(color='red', dash='dash', width=1.5)), row=1, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Lower'], name='BB Lower', line=dict(color='green', dash='dash', width=1.5), fill='tonexty', fillcolor='rgba(128,128,128,0.2)'), row=1, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price', line=dict(color='black', width=2), legend="legend"), row=1, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Upper'], name='BB Upper', line=dict(color='red', dash='dash', width=1.5), legend="legend"), row=1, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['BB_Lower'], name='BB Lower', line=dict(color='green', dash='dash', width=1.5), fill='tonexty', fillcolor='rgba(128,128,128,0.2)', legend="legend"), row=1, col=1)
     fig_ta.update_yaxes(title_text="볼린저밴드", row=1, col=1)
 
     # 2. 가격 및 이동평균선
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price ', showlegend=False, line=dict(color='black', width=2)), row=2, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5)), row=2, col=1)
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5)), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot[selected_asset], name='Price ', showlegend=False, line=dict(color='black', width=2), legend="legend2"), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA50'], name='SMA 50', line=dict(color='blue', width=1.5), legend="legend2"), row=2, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['SMA200'], name='SMA 200', line=dict(color='red', width=1.5), legend="legend2"), row=2, col=1)
     fig_ta.update_yaxes(title_text="이동평균선", row=2, col=1)
     
     # 골든크로스 & 데드크로스 화살표 표시
@@ -485,7 +485,7 @@ with ta_col2:
         )
     
     # 3. RSI
-    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple')), row=3, col=1)
+    fig_ta.add_trace(px_go.Scatter(x=df_plot['Date'], y=df_plot['RSI'], name='RSI', line=dict(color='purple'), legend="legend3"), row=3, col=1)
     fig_ta.add_hline(y=70, line=dict(color="red", dash="dash"), row=3, col=1)
     fig_ta.add_hline(y=30, line=dict(color="green", dash="dash"), row=3, col=1)
     
@@ -494,7 +494,16 @@ with ta_col2:
     fig_ta.add_hrect(y0=0, y1=30, line_width=0, fillcolor="green", opacity=0.1, row=3, col=1, annotation_text="과매도", annotation_position="bottom left", annotation_font_color="green")
     fig_ta.update_yaxes(title_text="RSI", range=[0, 100], row=3, col=1)
     
-    fig_ta.update_layout(height=1000, showlegend=True, hovermode="x unified", template="plotly_white")
+    fig_ta.update_layout(
+        height=1000, 
+        showlegend=True, 
+        hovermode="x unified", 
+        template="plotly_white",
+        legend=dict(y=0.82, yanchor="middle", x=1.02),
+        legend2=dict(y=0.41, yanchor="middle", x=1.02),
+        legend3=dict(y=0.09, yanchor="middle", x=1.02),
+        margin=dict(r=120)
+    )
     st.plotly_chart(fig_ta, use_container_width=True)
 
 st.caption("※ 본 분석은 기술적 지표에 기반한 참고 자료이며, 투자 결정의 최종 책임은 투자자 본인에게 있습니다.")
